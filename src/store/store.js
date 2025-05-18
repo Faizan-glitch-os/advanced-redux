@@ -7,7 +7,7 @@ const store = configureStore({
   reducer: {
     cartBtn: cartBtnSlice.reducer,
     cart: cartSlice.reducer,
-    notificaton: notificationSlice.reducer,
+    notification: notificationSlice.reducer,
   },
 });
 
