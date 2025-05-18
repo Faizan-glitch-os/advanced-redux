@@ -4,7 +4,7 @@ import Layout from "./components/Layout/Layout";
 import Products from "./components/Shop/Products";
 import Notification from "./components/UI/Notification";
 import { useEffect } from "react";
-import { sendCart } from "./store/cart";
+import { receiveCart, sendCart } from "./store/cart";
 
 let initialRun = true;
 
@@ -15,12 +15,18 @@ function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    dispatch(receiveCart());
+  }, [dispatch]);
+
+  useEffect(() => {
     if (initialRun) {
       initialRun = false;
       return;
     }
 
-    dispatch(sendCart(cart));
+    if (cart.isChanged) {
+      dispatch(sendCart(cart));
+    }
   }, [cart, dispatch]);
 
   return (

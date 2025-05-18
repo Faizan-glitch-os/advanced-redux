@@ -4,8 +4,12 @@ import { notificationActions } from "./notification";
 
 const cartSlice = createSlice({
   name: "cart",
-  initialState: { items: [], totalQuantity: 0 },
+  initialState: { items: [], totalQuantity: 0, isChanged: false },
   reducers: {
+    replaceCart(state, action) {
+      state.items = action.payload.items;
+      state.totalQuantity = action.payload.totalQuantity;
+    },
     addItem(state, action) {
       const receivedItem = action.payload;
 
@@ -13,6 +17,7 @@ const cartSlice = createSlice({
         (item) => item.id === receivedItem.id
       );
       state.totalQuantity++;
+      state.isChanged = true;
 
       if (!existingItem) {
         state.items.push({
@@ -32,6 +37,9 @@ const cartSlice = createSlice({
       const receivedId = action.payload;
 
       const existingItem = state.items.find((item) => item.id === receivedId);
+
+      state.totalQuantity--;
+      state.isChanged = true;
 
       if (existingItem.quantity === 1) {
         state.items = state.items.filter((item) => item.id !== receivedId);
@@ -58,7 +66,10 @@ export const sendCart = (cart) => {
         "https://react-advanced-redux-c009f-default-rtdb.firebaseio.com/cart.json",
         {
           method: "PUT",
-          body: JSON.stringify(cart),
+          body: JSON.stringify({
+            items: cart.items,
+            totalQuantity: cart.totalQuantity,
+          }),
         }
       );
 
@@ -89,6 +100,46 @@ export const sendCart = (cart) => {
           status: "error",
           title: "Failed",
           description: "Something went wrong",
+        })
+      );
+    }
+  };
+};
+
+export const receiveCart = () => {
+  return async (dispatch) => {
+    const fetchCart = async () => {
+      const response = await fetch(
+        "https://react-advanced-redux-c009f-default-rtdb.firebaseio.com/cart.json"
+      );
+
+      if (!response.ok) {
+        dispatch(
+          notificationActions.showNotification({
+            status: "error",
+            title: "Failed",
+            description: "Failed to load cart",
+          })
+        );
+      }
+
+      const responseData = await response.json();
+
+      return responseData;
+    };
+
+    try {
+      const cartData = await fetchCart();
+      cartActions.replaceCart({
+        items: cartData.items || [],
+        totalQuantity: cartData.totalQuantity,
+      });
+    } catch (error) {
+      dispatch(
+        notificationActions.showNotification({
+          status: "error",
+          title: "Failed",
+          description: "Failed to load cart",
         })
       );
     }
